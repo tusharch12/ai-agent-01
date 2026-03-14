@@ -1,48 +1,83 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-import requests
 
 load_dotenv()
 
 FREE_MODEL = "openrouter/free"
-TOOL_MODEL = "openrouter/free"
-
-conversation =[{'role':'user','content':'What is fundamental of economics? answer in one line'}]
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY")
 )
 
-response1 = client.chat.completions.create(
-    model=FREE_MODEL,
-    messages=conversation,
-    temperature=0.0,
-    # max_tokens=50,
-)
-turn1=response1.choices[0].message.content
-
-print(f"Response: {response1.choices[0].message.content}")
-print(f"tokens: {response1.usage.total_tokens}")
-print(f"Model: {response1.model}")
-
-conversation.append({'role':'assistant','content':turn1})
-conversation.append({'role':'user','content':'Give an example that justify fundatementals of economics? answer in one line'})
-
-response2 = client.chat.completions.create(
-    model=FREE_MODEL,
-    messages=conversation,
-    temperature=0.0,
-    # max_tokens=50,
-)
-turn2=response2.choices[0].message.content
-
-conversation.append({'role':'assistant','content':turn2})
-
-print(f"Response: {response2.choices[0].message.content}")
-print(f"tokens: {response2.usage.total_tokens}")
-print(f"Model: {response2.model}")
+conversation = []
+summary = ""
+WINDOW = 6
 
 
+def summarize(old_summary, old_messages):
 
+    prompt = f"""
+You are maintaining long-term memory for a conversation.
+
+Existing summary:
+{old_summary}
+
+New messages:
+{old_messages}
+
+Update the summary while preserving important facts,
+goals, technical topics, and decisions.
+
+Return only the updated summary.
+"""
+
+    res = client.chat.completions.create(
+        model=FREE_MODEL,
+        messages=[
+            {"role": "system", "content": prompt}
+        ],
+        temperature=0.0,
+    )
+
+    return res.choices[0].message.content
+
+
+while True:
+
+    question = input("Ask: ")
+
+    if question == "exit":
+        break
+
+    conversation.append({"role": "user", "content": question})
+
+    if len(conversation) > WINDOW:
+
+        old_messages = conversation[:-WINDOW]
+
+        summary = summarize(summary, old_messages)
+
+        conversation = conversation[-WINDOW:]
+
+    messages = []
+
+    messages.append({
+        "role": "system",
+        "content": f"You are a helpful assistant.\nConversation summary:\n{summary}"
+    })
+
+    messages.extend(conversation)
+
+    res = client.chat.completions.create(
+        model=FREE_MODEL,
+        messages=messages,
+        temperature=0.0,
+    )
+
+    answer = res.choices[0].message.content
+
+    print("Assistant:", answer)
+
+    conversation.append({"role": "assistant", "content": answer})
