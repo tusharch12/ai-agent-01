@@ -3,7 +3,7 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 from tools import whether_api
-from config import system_promt
+# from config import system_promt
 
 load_dotenv()
 
@@ -37,17 +37,17 @@ tools =[
 
 conversation = []
 
-conversation.append({"role": "system", "content": system_promt})
-first_call = client.chat.completions.create(
-    model=FREE_MODEL,
-    messages=conversation,
-    tools=tools,
-    temperature=0.3,
-)
+# conversation.append({"role": "system", "content": system_promt})
+# first_call = client.chat.completions.create(
+#     model=FREE_MODEL,
+#     messages=conversation,
+#     tools=tools,
+#     temperature=0.3,
+# )
 
-conversation.append(first_call.choices[0].message)
-print("Assistant:", first_call.choices[0].message.content)
-print("Assistant:", first_call.choices[0].message)
+# conversation.append(first_call.choices[0].message)
+# print("Assistant:", first_call.choices[0].message.content)
+# print("Assistant:", first_call.choices[0].message)
 
 while True: 
     question = input("Ask: ")
