@@ -1,6 +1,8 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+from tools import whether_api
+from config import system_promt
 
 load_dotenv()
 
@@ -11,9 +13,32 @@ client = OpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY")
 )
 
+tools =[
+    {
+        "type":"function",
+        "function":{
+            "name":"wheter_api",
+            "description":"Get the current weather for a city",
+            "parameters":{
+                "type":"object",
+                "properties":{
+                    "city_name":{
+                        "type":"string",
+                        "description":"The name of the city"
+                    }
+                },
+                "required":["city_name"]
+            }
+        }
+    }
+]
+
 conversation = []
 summary = ""
 WINDOW = 6
+
+
+conversation.append({"role": "system", "content": system_promt})
 
 
 def summarize(old_summary, old_messages):
@@ -38,11 +63,24 @@ Return only the updated summary.
         messages=[
             {"role": "system", "content": prompt}
         ],
+        tools=tools,
         temperature=0.0,
     )
 
     return res.choices[0].message.content
 
+
+first_run = client.chat.completions.create(
+    model=FREE_MODEL,
+    messages=conversation,
+    tools=tools,
+    temperature=0.3,
+)
+
+print('Assistant:', first_run.choices[0].message.content)
+
+conversation.append({"role": "assistant", "content": first_run.choices[0].message.content})
+    
 
 while True:
 
