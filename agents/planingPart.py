@@ -71,7 +71,7 @@ while True:
         messages=[
             {"role":"system","content":planner_system},
             {"role":"user","content":user_input},
-            {"role":"user","content":chat_history}
+            {"role":"user","content": json.dumps(chat_history)}
         ]
     )
     plan_steps_str = plan_steps_response.choices[0].message.content
